@@ -1,0 +1,8 @@
+{
+  "Id": "Angle",
+  "DisplayName": "Angle (Beta)",
+  "Author": "Angle Team",
+  "Version": "0.1.0-beta",
+  "AssemblyName": "Angle.dll",
+  "EntryMethod": "Angle.AngleMod.Load"
+}
