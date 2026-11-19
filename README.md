@@ -2,11 +2,6 @@
 Optimize the editor experience in terms of copy-paste and orbit angle.
 
 
-# Angle
-
-**0.1.0-beta** · A Dance of Fire and Ice
-
-
 ## 使用
 
 - 定向粘贴、原地转向与覆盖粘贴。
