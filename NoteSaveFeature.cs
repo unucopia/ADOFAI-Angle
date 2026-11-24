@@ -1909,6 +1909,10 @@ namespace Angle
     {
         private static bool Prefix(scnEditor editor)
         {
+            if (EventClipboardFeature.TryPaste(editor))
+            {
+                return false;
+            }
             if (NoteSaveFeature.OverwritePasteEnabled)
             {
                 return !NoteSaveFeature.TryOverwritePaste(editor);

@@ -1,0 +1,15 @@
+.vs/
+.idea/
+bin/
+obj/
+dist/
+*.user
+*.suo
+*.dll
+*.exe
+*.pdb
+*.cache
+/Settings.xml
+/notesave/
+*.adofai
+*.anglepattern

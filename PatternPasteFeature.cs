@@ -652,6 +652,13 @@ namespace Angle
                     return;
                 }
                 NoteSaveFeature.PrepareSavedPatternForPaste(editor);
+                if (EventClipboardFeature.HasEventClipboard(editor))
+                {
+                    editor.ShowNotification(AngleMod.L(
+                        "当前复制的是事件，请按 Ctrl+V 粘贴",
+                        "The clipboard contains events. Press Ctrl+V to paste them."));
+                    return;
+                }
                 if (editor.clipboardContent != scnEditor.ClipboardContent.Floors
                     || editor.clipboard.Count == 0)
                 {

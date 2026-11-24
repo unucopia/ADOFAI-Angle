@@ -132,6 +132,7 @@ public static class AngleMod
 		capturingHotkey = false;
 		hotkeyCaptureTarget = HotkeyCaptureTarget.None;
 		ResetHeldSelectionArrow();
+		EventClipboardFeature.Reset();
 			NoteSaveFeature.Shutdown();
 		return true;
 	}

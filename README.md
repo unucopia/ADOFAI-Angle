@@ -1,6 +1,9 @@
 # ADOFAI-Angle
 Optimize the editor experience in terms of copy-paste and orbit angle.
 
+## 安装
+
+从 [v0.1.1-beta 的发布页](https://github.com/unucopia/ADOFAI-Angle/releases/tag/v0.1.1-beta) 下载 `Angle-0.1.1-beta.zip`。将 ZIP 内的 `Angle` 文件夹解压到游戏的 `Mods` 目录，再在 Unity Mod Manager 中启用 `Angle (Beta)`。升级时保留 `Settings.xml` 和 `notesave/`。
 
 ## 使用
 
@@ -8,6 +11,7 @@ Optimize the editor experience in terms of copy-paste and orbit angle.
 - 保拍，可选择自动排版或变速补偿, 意在粘贴后自动优化键型, 保持节奏不变, 减少人工成本。
 - 键型剪贴板支持保存、浏览、预览、搜索和整理。
 - 轨道角度显示、重叠轨道层级、相对角度放置与视角控制。
+- 单格事件支持多选、按选区复制和追加粘贴。鼠标靠近右侧箭头时展开旋转控件。
 
 ## 测试版说明
 保拍取决于衔接处与谱面事件；从文件载入的旧键型可能没有复制当时的计时信息。复杂段落无法完全保证保拍正确。[保拍与键型说明](docs/pattern-editing.md)。

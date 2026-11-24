@@ -12,9 +12,17 @@ namespace Angle
     internal static class EditorViewRotationControl
     {
         private const float MaximumAngle = 180f;
+        private const float HoverPadding = 10f;
+        private const float RevealDuration = 0.18f;
+        private const float HiddenOffset = 54f;
+        private const float MarkerOpacity = 0.42f;
 
         private static scnEditor owner;
         private static GameObject root;
+        private static RectTransform hoverRect;
+        private static RectTransform controlsRect;
+        private static CanvasGroup controlsGroup;
+        private static Image marker;
         private static Slider slider;
         private static TMP_InputField valueInput;
         private static Sprite nudgeButtonSprite;
@@ -22,6 +30,7 @@ namespace Angle
         private static bool updating;
         private static bool sliderDragging;
         private static float currentValue;
+        private static float revealProgress;
 
         internal static Transform RootTransform => root == null ? null : root.transform;
 
@@ -44,13 +53,49 @@ namespace Angle
             {
                 root.SetActive(visible);
             }
-            if (visible
-                && !sliderDragging
-                && editor.camera != null
-                && !(valueInput != null && valueInput.isFocused))
+            if (!visible)
+            {
+                sliderDragging = false;
+                revealProgress = 0f;
+                ApplyReveal(false);
+                return;
+            }
+
+            if (sliderDragging && !Input.GetMouseButton(0))
+            {
+                sliderDragging = false;
+            }
+            bool editingValue = valueInput != null && valueInput.isFocused;
+            bool reveal = sliderDragging || editingValue || IsPointerNear(editor.levelEditorCanvas);
+            revealProgress = Mathf.MoveTowards(revealProgress, reveal ? 1f : 0f, Time.unscaledDeltaTime / RevealDuration);
+            ApplyReveal(reveal);
+            if (!sliderDragging && editor.camera != null && !editingValue)
             {
                 SyncFromCamera(editor, force: false);
             }
+        }
+
+        private static bool IsPointerNear(Canvas canvas)
+        {
+            Camera eventCamera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
+            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(hoverRect, Input.mousePosition, eventCamera, out Vector2 local))
+            {
+                return false;
+            }
+            Rect bounds = hoverRect.rect;
+            bounds.yMin -= HoverPadding;
+            bounds.yMax += HoverPadding;
+            bounds.xMin += HoverPadding;
+            return bounds.Contains(local);
+        }
+
+        private static void ApplyReveal(bool reveal)
+        {
+            float amount = Mathf.SmoothStep(0f, 1f, revealProgress);
+            controlsRect.anchoredPosition = new Vector2((1f - amount) * HiddenOffset, 0f);
+            controlsGroup.alpha = amount;
+            controlsGroup.interactable = controlsGroup.blocksRaycasts = reveal && revealProgress >= 0.6f;
+            marker.color = new Color(1f, 1f, 1f, (1f - amount) * MarkerOpacity);
         }
 
         internal static void SyncFromCamera(scnEditor editor, bool force)
@@ -89,9 +134,14 @@ namespace Angle
             }
             owner = null;
             root = null;
+            hoverRect = null;
+            controlsRect = null;
+            controlsGroup = null;
+            marker = null;
             slider = null;
             valueInput = null;
             sliderDragging = false;
+            revealProgress = 0f;
         }
 
         private static void Ensure(scnEditor editor)
@@ -114,19 +164,51 @@ namespace Angle
             root = new GameObject(
                 "AngleViewRotationControl",
                 typeof(RectTransform));
-            RectTransform rootRect = root.GetComponent<RectTransform>();
-            rootRect.SetParent(editor.levelEditorCanvas.transform, false);
-            rootRect.anchorMin = new Vector2(1f, 0.5f);
-            rootRect.anchorMax = new Vector2(1f, 0.5f);
-            rootRect.pivot = new Vector2(1f, 0.5f);
-            rootRect.anchoredPosition = Vector2.zero;
-            rootRect.sizeDelta = new Vector2(110f, sliderHeight + 58f);
+            hoverRect = root.GetComponent<RectTransform>();
+            hoverRect.SetParent(editor.levelEditorCanvas.transform, false);
+            hoverRect.anchorMin = hoverRect.anchorMax = hoverRect.pivot = new Vector2(1f, 0.5f);
+            hoverRect.anchoredPosition = Vector2.zero;
+            hoverRect.sizeDelta = new Vector2(110f, sliderHeight + 58f);
 
-            BuildSlider(editor, rootRect, sliderHeight);
-            BuildValueInput(editor, rootRect);
-            BuildNudgeButton(rootRect, "-", -1f, sliderHeight);
-            BuildNudgeButton(rootRect, "+", 1f, sliderHeight);
+            var controls = new GameObject("Rotation controls", typeof(RectTransform), typeof(CanvasGroup));
+            controlsRect = (RectTransform)controls.transform;
+            controlsRect.SetParent(hoverRect, false);
+            controlsRect.anchorMin = Vector2.zero;
+            controlsRect.anchorMax = Vector2.one;
+            controlsRect.offsetMin = controlsRect.offsetMax = Vector2.zero;
+            controlsGroup = controls.GetComponent<CanvasGroup>();
+            BuildSlider(editor, controlsRect, sliderHeight);
+            BuildValueInput(editor, controlsRect);
+            BuildNudgeButton(controlsRect, "-", -1f, sliderHeight);
+            BuildNudgeButton(controlsRect, "+", 1f, sliderHeight);
+            BuildMarker(editor);
+            ApplyReveal(false);
             root.transform.SetAsLastSibling();
+        }
+
+        private static void BuildMarker(scnEditor editor)
+        {
+            marker = new GameObject("Rotation controls arrow", typeof(RectTransform), typeof(Image)).GetComponent<Image>();
+            RectTransform rect = marker.rectTransform;
+            rect.SetParent(hoverRect, false);
+            rect.anchorMin = rect.anchorMax = new Vector2(1f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = new Vector2(-12f, 0f);
+            rect.sizeDelta = new Vector2(15f, 15f);
+            rect.localRotation = Quaternion.Euler(0f, 0f, -90f);
+            marker.sprite = editor.fileSpriteDown;
+            if (marker.sprite == null && editor.fileSpriteUp != null)
+            {
+                marker.sprite = editor.fileSpriteUp;
+                rect.localRotation = Quaternion.Euler(0f, 0f, 90f);
+            }
+            if (marker.sprite == null && editor.fileArrow != null)
+            {
+                marker.sprite = editor.fileArrow.sprite;
+            }
+            marker.enabled = marker.sprite != null;
+            marker.preserveAspect = true;
+            marker.raycastTarget = false;
         }
 
         private static void BuildSlider(
